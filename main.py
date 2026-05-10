@@ -127,3 +127,17 @@ def get_notes_stats():
         "total_notes": len(notes_db),
         "by_category": categories
     }
+
+@app.delete("/notes/{note_id}")
+def delete_note(note_id: int):
+    """Löscht eine spezifische Notiz anhand ihrer ID."""
+    notes_db, _ = load_notes()
+    
+
+    for i, note in enumerate(notes_db):
+        if note.id == note_id:
+            notes_db.pop(i)         
+            save_notes(notes_db)    
+            return {"message": f"Note {note_id} deleted successfully"}
+    
+    raise HTTPException(status_code=404, detail=f"Note with ID {note_id} not found")
