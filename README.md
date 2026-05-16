@@ -1,7 +1,7 @@
-# Notizen REST API — Emre Kartalel
+# Notizen REST API
 ## Angewandte Programmierung · Hochschule Coburg
 
-Dieses Repository enthält das Lernprojekt zum Kurs **Angewandte Programmierung** (HS Coburg, Dozent: Dr. Martin Enders). Alle Kurstag-Endpoints sind in einer einzigen FastAPI-App (`main.py`) gebündelt, ergänzt durch ein Streamlit-Frontend (`frontend.py`) und eine umfangreiche Pytest-Test-Suite.
+Alle Kurstag-Endpoints sind in einer einzigen FastAPI-App (`main.py`) gebündelt, ergänzt durch ein Streamlit-Frontend (`frontend.py`) und eine umfangreiche Pytest-Test-Suite.
 
 ---
 
