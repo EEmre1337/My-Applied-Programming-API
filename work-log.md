@@ -50,10 +50,9 @@ Den ID-Konflikt habe ich behoben, indem `load_notes()` bei jedem Endpoint-Aufruf
  
 ### Day 3
  
-#### 1. ✅ What did I accomplish?
+##### 1. ✅ What did I accomplish?
  
-Tag 3 stand unter dem Motto REST-Design und vollständiges CRUD. Ich habe gelernt, dass URLs Ressourcen (Substantive) beschreiben sollen und HTTP-Methoden die Aktion ausdrücken. Meine Notes-API habe ich zur Version 2.0 erweitert: Tags als `list[str]` hinzugefügt, `GET /notes` um Query-Parameter `category`, `search` und `tag` erweitert (auch kombinierbar), `PUT /notes/{id}` (volle Ersetzung) und `DELETE /notes/{id}` mit Status 204 ergänzt. Dazu kamen die Tag-Ressourcen `GET /tags` und `GET /tags/{tag_name}/notes`. Als große Hausaufgabe habe ich die komplette Migration auf SQLite via SQLModel durchgeführt: Da SQLite keinen Array-Typ kennt, speichere ich Tags als CSV-String intern und konvertiere über `_tags_to_csv` / `_tags_to_list` an den API-Grenzen. Die Session-Dependency `SessionDep = Annotated[Session, Depends(get_session)]` ersetzt die alten `load_notes()`/`save_notes()`-Helfer. Außerdem habe ich PATCH mit `Optional`-Feldern und einen `created_after`/`created_before`-Datumsfilter implementiert.
- 
+Tag 3 stand unter dem Motto REST-Design und vollständiges CRUD. Ich habe gelernt, dass URLs Ressourcen (Substantive) beschreiben sollen und HTTP-Methoden die Aktion ausdrücken. Meine Notes-API habe ich zur Version 2.0 erweitert: Tags als `list[str]` hinzugefügt, `GET /notes` um Query-Parameter `category`, `search` und `tag` erweitert (auch kombinierbar), `PUT /notes/{id}` (volle Ersetzung) und `DELETE /notes/{id}` mit Status 204 ergänzt. Dazu kamen die Tag-Ressourcen `GET /tags` und `GET /tags/{tag_name}/notes`. Als große Hausaufgabe habe ich die komplette Migration auf SQLite via SQLModel durchgeführt: Da SQLite keine Arrays unterstützt, habe ich eine **echte relationale Many-to-Many-Beziehung (M:N)** über eine explizite Verbindungstabelle (`NoteTagLink`) und das `Relationship`-Feature von SQLModel implementiert. Die Session-Dependency `SessionDep = Annotated[Session, Depends(get_session)]` ersetzt die alten Datei-Helfer. Außerdem habe ich `PATCH` mit `Optional`-Feldern und einen `created_after`/`created_before`-Datumsfilter implementiert.
 ---
  
 #### 2. 🚧 What challenges did I face?
@@ -188,6 +187,6 @@ Die größte Herausforderung des gesamten Kurses war für mich das Zusammenspiel
  
 #### 3. 💡 How did I overcome them?
  
-Durch das schrittweise Vorgehen in den Kurstagen — jeder Tag hat auf dem vorherigen aufgebaut — war die Komplexität handhabbar. Die Test-Suite hat mir geholfen, Regressionen und Fehler beim Umbauen sofort zu erkennen. Rückblickend war die Entscheidung, Tags als CSV in SQLite zu speichern und an den API-Grenzen zu konvertieren, pragmatisch absolut richtig für dieses Projekt — in einem größeren Produktionssystem würde ich eine separate Tags-Tabelle mit einer echten Many-to-Many-Beziehung bevorzugen.
+Durch das schrittweise Vorgehen in den Kurstagen — jeder Tag hat auf dem vorherigen aufgebaut — war die Komplexität handhabbar. Die Test-Suite hat mir geholfen, Regressionen und Fehler beim Umbauen sofort zu erkennen. Rückblickend war die Entscheidung, von Anfang an auf eine **saubere Many-to-Many-Beziehung mit einer echten Verknüpfungstabelle** statt auf unsaubere CSV-String-Hacks in der Datenbank zu setzen, der Schlüssel für die langfristige Datenintegrität und die professionelle Struktur des Gesamtprojekts.
  
 ---
