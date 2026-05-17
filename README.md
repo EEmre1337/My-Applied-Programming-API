@@ -1,7 +1,7 @@
 # Notizen REST API
-## Angewandte Programmierung · Hochschule Coburg
+## Angewandte Programmierung · Hochschule Coburg · Emre Kartalel
 
-Alle Kurstag-Endpoints sind in einer einzigen FastAPI-App (`main.py`) gebündelt, ergänzt durch ein Streamlit-Frontend (`frontend.py`) und eine umfangreiche Pytest-Test-Suite.
+Eine vollständige REST API für Notizen, gebaut mit **FastAPI** und **SQLite**, ergänzt durch ein **Streamlit-Frontend** und eine eigene **Pytest-Test-Suite**.
 
 ---
 
@@ -15,32 +15,32 @@ uv sync
 **Backend starten**
 ```bash
 uv run fastapi dev main.py
-# → http://127.0.0.1:8000
-# → Swagger-Doku: http://127.0.0.1:8000/docs
+# → API:          http://127.0.0.1:8000
+# → Swagger Docs: http://127.0.0.1:8000/docs
 ```
 
-**Frontend starten** (separates Terminal)
+**Frontend starten** *(separates Terminal)*
 ```bash
 uv run streamlit run frontend.py
 # → http://localhost:8501
 ```
 
-**Tests ausführen**
+---
+
+## 🧪 Tests ausführen
+
+Beide Test-Suites benötigen ein laufendes Backend (Terminal 1: Server, Terminal 2: Tests).
+
 ```bash
-# Alle Tests (kein laufender Server nötig)
+# Offizielle Test-Suite des Dozenten
+uv run pytest test_main.py -v
+
+# Eigene Pydantic-Validierungs-Tests (Tag 5)
+uv run pytest test_validation.py -v
+
+# Alle Tests auf einmal
 uv run pytest -v
-
-# Nur TestClient-Suite
-uv run pytest Exploration/test_main.py -v
-
-# Einzelner Test
-uv run pytest Exploration/test_main.py::test_read_root -v
-
-# Validierungs-Tests
-uv run pytest Exploration/test_validation.py -v
 ```
-
-> Die Integrations-Tests in `Exploration/test_suit.py` schicken echte HTTP-Requests an `http://127.0.0.1:8000` und überspringen sich automatisch (via `_require_server`-Fixture), wenn der Server nicht läuft.
 
 ---
 
@@ -48,85 +48,101 @@ uv run pytest Exploration/test_validation.py -v
 
 ```
 my-first-api/
-├── main.py                        # Komplette FastAPI-App (alle Kurstage)
-├── frontend.py                    # Streamlit-Frontend für die Notes-API
-├── notes.db                       # SQLite-Datenbank (via SQLModel)
+├── main.py                        # FastAPI Backend (Tag 1–5)
+├── frontend.py                    # Streamlit Frontend (Tag 7)
+├── test_main.py                   # Offizielle Test-Suite des Dozenten (Tag 6)
+├── test_validation.py             # Pydantic-Validierungs-Tests (Tag 5)
+├── work-log.md                    # Lerntagebuch (Tag 1–9)
 ├── CLAUDE.md                      # Architektur-Dokumentation
-├── work-log.md                    # Lerntagebuch (Days 1–9)
 ├── pyproject.toml                 # Projektabhängigkeiten
 ├── uv.lock                        # Lockfile
 ├── data/
-│   └── notes.json                 # Legacy JSON-Persistenz (Day 2, historisch)
+│   └── notes.json                 # Legacy JSON-Persistenz (Tag 2, historisch)
 └── Exploration/
-    ├── class_based_decorator.py   # Decorator-Lernartefakt (Day 6)
-    ├── test_main.py               # Haupt-Test-Suite (TestClient + Integration)
-    ├── test_suit.py               # Referenz-Test-Suite (requests-basiert)
-    └── test_validation.py         # Pydantic-Validierungs-Tests (Day 5)
+    └── class_based_decorator.py   # Decorator-Exploration (Tag 6)
 ```
 
 ---
 
 ## 🏛️ API-Übersicht
 
-### Notes (Day 2–5)
+### Tag 1 — Basis-Endpunkte
 
 | Method | Endpoint | Beschreibung |
-|--------|----------|-------------|
+|--------|----------|--------------|
+| `GET` | `/` | Hello World & API-Info |
+| `GET` | `/status` | API-Status und Version |
+| `GET` | `/about` | Projektmetadaten |
+| `GET` | `/square/{number}` | Quadratzahl berechnen |
+| `GET` | `/student` | Studierenden-Info |
+| `GET` | `/double/{number}` | Zahl verdoppeln |
+
+### Tag 2–5 — Notes CRUD
+
+| Method | Endpoint | Beschreibung |
+|--------|----------|--------------|
 | `POST` | `/notes` | Neue Notiz erstellen (201) |
-| `GET` | `/notes` | Alle Notizen (mit Filtern: `category`, `search`, `tag`, `created_after`, `created_before`) |
+| `GET` | `/notes` | Alle Notizen (mit Filtern) |
 | `GET` | `/notes/stats` | Statistiken (total, by_category, top_tags) |
-| `GET` | `/notes/{id}` | Einzelne Notiz |
-| `PUT` | `/notes/{id}` | Vollständige Ersetzung |
-| `PATCH` | `/notes/{id}` | Partielle Aktualisierung |
-| `DELETE` | `/notes/{id}` | Löschen (204) |
-| `DELETE` | `/notes/duplicates` | Duplikate entfernen |
+| `GET` | `/notes/{id}` | Einzelne Notiz abrufen |
+| `PUT` | `/notes/{id}` | Notiz vollständig ersetzen |
+| `PATCH` | `/notes/{id}` | Notiz partiell aktualisieren |
+| `DELETE` | `/notes/{id}` | Notiz löschen (204) |
 
-### Kategorien & Tags
+### Tag 3 — Kategorien & Tags als Ressourcen
 
 | Method | Endpoint | Beschreibung |
-|--------|----------|-------------|
+|--------|----------|--------------|
 | `GET` | `/categories` | Alle genutzten Kategorien |
 | `GET` | `/categories/{name}/notes` | Notizen einer Kategorie |
 | `GET` | `/tags` | Alle genutzten Tags |
 | `GET` | `/tags/{name}/notes` | Notizen mit einem Tag |
 
-### Weitere Endpoints (Day 3–4)
+### Query-Parameter für `GET /notes`
 
-| Method | Endpoint | Beschreibung |
-|--------|----------|-------------|
-| `GET` | `/` | Hello World |
-| `GET` | `/greetings/{name}` | Personalisierte Begrüßung |
-| `GET` | `/is-adult/{age}` | Volljährigkeitsprüfung |
-| `GET` | `/queryparameters` | Query-Parameter-Demo |
+| Parameter | Typ | Beschreibung |
+|-----------|-----|--------------|
+| `category` | string | Exakte Kategorie-Filterung |
+| `search` | string | Suche in Titel und Inhalt |
+| `tag` | string | Exakte Tag-Filterung |
+| `created_after` | ISO 8601 | Nur Notizen nach diesem Datum |
+| `created_before` | ISO 8601 | Nur Notizen vor diesem Datum |
 
 ---
 
 ## 🗄️ Datenbankdesign
 
-Die App nutzt **SQLite** über **SQLModel** (Pydantic + SQLAlchemy). Tags werden als CSV-String in einer `tags`-Spalte gespeichert (SQLite kennt keinen Array-Typ) und an den API-Grenzen über `_tags_to_csv` / `_tags_to_list` konvertiert — nach außen liefert die API immer eine saubere `list[str]`.
+Die App nutzt **SQLite** über **SQLModel** (Pydantic + SQLAlchemy).
 
-**Kritische Route-Reihenfolge:** `/notes/stats` und `/notes/duplicates` müssen **vor** `/notes/{note_id}` definiert sein, da FastAPI Top-Down matched und sonst `stats`/`duplicates` als Integer-Path-Parameter interpretiert.
+Tags werden über eine echte **Many-to-Many-Beziehung** (`NoteTagLink`) mit Notizen verknüpft — nicht als CSV-String. Jeder Tag existiert genau einmal in der `tags`-Tabelle und wird über die Verknüpfungstabelle mit beliebig vielen Notizen verbunden.
+
+```
+notes ──── NoteTagLink ──── tags
+  id            note_id       id
+  title         tag_id        name (unique)
+  content
+  category
+  created_at
+```
+
+**Kritische Route-Reihenfolge:** `/notes/stats` muss **vor** `/notes/{note_id}` definiert sein, da FastAPI top-down matched und `stats` sonst als Integer-ID interpretiert wird (→ 422).
 
 ---
 
-## ✅ Pydantic-Validierung (Day 5)
+## ✅ Pydantic-Validierung (Tag 5)
 
 `NoteCreate` und `NoteUpdate` erzwingen:
 
-- `title`: 3–100 Zeichen (nach Strip)
-- `content`: 1–10.000 Zeichen
-- `category`: muss in `{work, personal, school, ideas, general}` sein, wird normalisiert (lowercase)
-- `tags`: max. 10 Tags, jeder 2–30 Zeichen, Pattern `^[a-z0-9-]+$`, automatisch dedupliziert
-- `extra="forbid"`: unbekannte Felder (Tippfehler) werden mit 422 abgelehnt
-- `str_strip_whitespace=True`: Whitespace wird automatisch entfernt
+| Feld | Regel |
+|------|-------|
+| `title` | 3–100 Zeichen |
+| `content` | 1–10.000 Zeichen |
+| `category` | Muss in `{work, personal, school, ideas, general}` sein |
+| `tags` | Max. 10 Tags, jeder mind. 2 Zeichen, automatisch normalisiert |
+| *(global)* | `extra="forbid"`: unbekannte Felder → 422 |
+| *(global)* | `str_strip_whitespace=True`: Whitespace wird automatisch entfernt |
 
----
-
-## 🧪 Testen
-
-- **`Exploration/test_main.py`** — Haupt-Suite mit `TestClient` (kein Server nötig) + Faker für Testdaten. Die `clean_notes`-Fixture leitet die SQLite-Engine per `monkeypatch` auf eine temporäre DB um.
-- **`Exploration/test_suit.py`** — Referenz-Suite mit `requests` (Server muss laufen), auto-skip via `_require_server`-Fixture.
-- **`Exploration/test_validation.py`** — Validierungs-Tests für Pydantic-Constraints.
+Tags werden automatisch **lowercased**, **gestrippt** und **dedupliziert**.
 
 ---
 
@@ -134,7 +150,7 @@ Die App nutzt **SQLite** über **SQLModel** (Pydantic + SQLAlchemy). Tags werden
 
 | Technologie | Version | Verwendung |
 |-------------|---------|-----------|
-| Python | 3.13 | Laufzeitumgebung |
+| Python | 3.14 | Laufzeitumgebung |
 | FastAPI | ≥ 0.136 | Web-Framework |
 | SQLModel | ≥ 0.0.38 | ORM + Pydantic-Integration |
 | Pydantic | ≥ 2.13 | Datenvalidierung |

@@ -22,6 +22,7 @@ BASE_URL = "http://127.0.0.1:8000"
 # Session Fixture – Bricht alle Tests ab, falls die API gar nicht läuft
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="session", autouse=True)
 def _require_server():
     """Überspringt die gesamte Test-Suite, wenn die API offline ist."""
@@ -35,13 +36,14 @@ def _require_server():
 # Hilfsfunktionen
 # ---------------------------------------------------------------------------
 
+
 def _valid_payload(**overrides) -> dict:
     """Gibt eine minimale, gültige Notiz zurück (mit optionalen Überschreibungen)."""
     base = {
-        "title": "Gültiger Titel",
-        "content": "Hier steht ein wenig Inhalt.",
-        "category": "arbeit",  # Angepasst an deine deutschen Kategorien!
-        "tags": ["beispiel", "test"],
+        "title": "Valid Title",
+        "content": "Some content here.",
+        "category": "work",
+        "tags": ["example", "test"],
     }
     base.update(overrides)
     return base
@@ -50,6 +52,7 @@ def _valid_payload(**overrides) -> dict:
 # ===========================================================================
 # Aufgabe 1 – NoteCreate Feld-Beschränkungen (Constraints)
 # ===========================================================================
+
 
 def test_create_note_rejects_short_title():
     """Der Titel muss mindestens 3 Zeichen lang sein."""
@@ -65,18 +68,14 @@ def test_create_note_rejects_empty_title():
 
 def test_create_note_accepts_minimum_title():
     """Ein Titel mit genau 3 Zeichen sollte akzeptiert werden."""
-    response = requests.post(
-        f"{BASE_URL}/notes", json=_valid_payload(title="abc")
-    )
+    response = requests.post(f"{BASE_URL}/notes", json=_valid_payload(title="abc"))
     assert response.status_code == 201, response.text
 
 
 def test_create_note_rejects_too_long_title():
     """Ein Titel mit über 100 Zeichen muss abgelehnt werden."""
     long_title = "a" * 101
-    response = requests.post(
-        f"{BASE_URL}/notes", json=_valid_payload(title=long_title)
-    )
+    response = requests.post(f"{BASE_URL}/notes", json=_valid_payload(title=long_title))
     assert response.status_code == 422, response.text
 
 
@@ -89,45 +88,47 @@ def test_create_note_rejects_empty_content():
 def test_create_note_rejects_unknown_category():
     """Eine unbekannte Kategorie muss mit einem 422 Fehler scheitern."""
     response = requests.post(
-        f"{BASE_URL}/notes", json=_valid_payload(category="geheim-kategorie")
+        f"{BASE_URL}/notes", json=_valid_payload(category="invalid-category")
     )
     assert response.status_code == 422, response.text
 
 
 def test_create_note_accepts_all_allowed_categories():
     """Jede der erlaubten Kategorien muss von der API akzeptiert werden."""
-    # Hier stehen jetzt deine deutschen Kategorien aus der main.py
-    allowed = ["arbeit", "privat", "uni", "ideen", "allgemein"]
+    allowed = ["work", "personal", "school", "ideas", "general"]
     for cat in allowed:
         response = requests.post(
             f"{BASE_URL}/notes",
             json=_valid_payload(title=f"Test {cat}", category=cat),
         )
-        assert response.status_code == 201, f"Kategorie '{cat}' wurde abgelehnt: {response.text}"
+        assert response.status_code == 201, (
+            f"Category '{cat}' was rejected: {response.text}"
+        )
 
 
 # ===========================================================================
 # Aufgabe 2 – Tag Validierung
 # ===========================================================================
 
+
 def test_create_note_normalizes_tags():
     """Tags sollen automatisch klein geschrieben und Duplikate entfernt werden."""
     response = requests.post(
         f"{BASE_URL}/notes",
-        json=_valid_payload(tags=["WICHTIG", "wichtig", "Meeting"]),
+        json=_valid_payload(tags=["URGENT", "urgent", "Meeting"]),
     )
     assert response.status_code == 201, response.text
-    assert sorted(response.json()["tags"]) == ["meeting", "wichtig"]
+    assert sorted(response.json()["tags"]) == ["meeting", "urgent"]
 
 
 def test_create_note_strips_tag_whitespace():
     """Leerzeichen um Tags herum müssen entfernt werden."""
     response = requests.post(
         f"{BASE_URL}/notes",
-        json=_valid_payload(tags=["  hallo  ", "hallo"]),
+        json=_valid_payload(tags=["  hello  ", "hello"]),
     )
     assert response.status_code == 201, response.text
-    assert response.json()["tags"] == ["hallo"]
+    assert response.json()["tags"] == ["hello"]
 
 
 def test_create_note_rejects_single_char_tag():
@@ -170,10 +171,11 @@ def test_create_note_accepts_exactly_10_tags():
 # Aufgabe 3 – extra="forbid"
 # ===========================================================================
 
+
 def test_create_note_forbids_extra_fields():
     """Unbekannte Zusatzfelder im JSON müssen abgelehnt werden."""
     payload = _valid_payload()
-    payload["unbekanntes_feld"] = "sollte nicht erlaubt sein"
+    payload["unknown_field"] = "should not be allowed"
     response = requests.post(f"{BASE_URL}/notes", json=payload)
     assert response.status_code == 422, response.text
 
@@ -182,18 +184,23 @@ def test_create_note_forbids_extra_fields():
 # Aufgabe 4 – NoteUpdate (PATCH) Validierung
 # ===========================================================================
 
+
 def _create_test_note() -> dict:
-    """Hilfsfunktion, um schnell eine Notiz für die PATCH-Tests zu erstellen."""
+    """Erstellt eine Notiz für die PATCH-Tests."""
     r = requests.post(
         f"{BASE_URL}/notes",
-        json={"title": "Patch Mich", "content": "Originaler Inhalt.", "category": "arbeit"},
+        json={
+            "title": "Patch Me",
+            "content": "Original content.",
+            "category": "work",
+        },
     )
     assert r.status_code == 201
     return r.json()
 
 
 def test_patch_with_empty_body_succeeds():
-    """Ein leerer PATCH-Request `{}` muss einen 200er Status (keine Änderung) liefern."""
+    """Ein leerer PATCH-Request `{}` darf nichts ändern (Status 200)."""
     note = _create_test_note()
     response = requests.patch(f"{BASE_URL}/notes/{note['id']}", json={})
     assert response.status_code == 200, response.text
@@ -213,38 +220,39 @@ def test_patch_with_invalid_category_fails():
     """Ein PATCH mit einer ungültigen Kategorie muss scheitern."""
     note = _create_test_note()
     response = requests.patch(
-        f"{BASE_URL}/notes/{note['id']}", json={"category": "ungueltig"}
+        f"{BASE_URL}/notes/{note['id']}", json={"category": "invalid"}
     )
     assert response.status_code == 422, response.text
 
 
 def test_patch_normalizes_category_to_lowercase():
-    """Auch bei einem PATCH muss die Kategorie klein geschrieben werden."""
+    """Auch bei einem PATCH muss die Kategorie normalisiert werden."""
     note = _create_test_note()
     response = requests.patch(
-        f"{BASE_URL}/notes/{note['id']}", json={"category": "PRIVAT"}
+        f"{BASE_URL}/notes/{note['id']}", json={"category": "PERSONAL"}
     )
     assert response.status_code == 200, response.text
-    assert response.json()["category"] == "privat"
+    assert response.json()["category"] == "personal"
 
 
 # ===========================================================================
-# Aufgabe 5 – Tag Modell Check
+# Aufgabe 5 – Tag Normalisierung
 # ===========================================================================
 
-def test_tag_name_rejects_uppercase_via_normalization():
+
+def test_tag_name_stored_as_lowercase():
     """Tags in Großbuchstaben müssen als Kleinbuchstaben gespeichert werden."""
     response = requests.post(
-        f"{BASE_URL}/notes", json=_valid_payload(tags=["GROSSBUCHSTABEN"])
+        f"{BASE_URL}/notes", json=_valid_payload(tags=["UPPERCASE"])
     )
     assert response.status_code == 201, response.text
-    assert "grossbuchstaben" in response.json()["tags"]
-    assert "GROSSBUCHSTABEN" not in response.json()["tags"]
+    assert "uppercase" in response.json()["tags"]
+    assert "UPPERCASE" not in response.json()["tags"]
 
 
-def test_tag_reused_across_notes_no_duplicate_in_tags_list():
-    """Ein Tag, der in mehreren Notizen verwendet wird, darf in /tags nur einmal auftauchen."""
-    unique_tag = "test-wiederverwendeter-tag-xyz"
+def test_tag_reused_across_notes_appears_once_in_tags_list():
+    """Ein Tag in mehreren Notizen darf in GET /tags nur einmal auftauchen."""
+    unique_tag = "shared-unique-tag-xyz"
     requests.post(f"{BASE_URL}/notes", json=_valid_payload(tags=[unique_tag]))
     requests.post(f"{BASE_URL}/notes", json=_valid_payload(tags=[unique_tag]))
 
