@@ -32,9 +32,6 @@ uv run streamlit run frontend.py
 Beide Test-Suites benötigen ein laufendes Backend (Terminal 1: Server, Terminal 2: Tests).
 
 ```bash
-# Offizielle Test-Suite des Dozenten
-uv run pytest test_main.py -v
-
 # Eigene Pydantic-Validierungs-Tests (Tag 5)
 uv run pytest test_validation.py -v
 
@@ -50,7 +47,6 @@ uv run pytest -v
 my-first-api/
 ├── main.py                        # FastAPI Backend (Tag 1–5)
 ├── frontend.py                    # Streamlit Frontend (Tag 7)
-├── test_main.py                   # Offizielle Test-Suite des Dozenten (Tag 6)
 ├── test_validation.py             # Pydantic-Validierungs-Tests (Tag 5)
 ├── work-log.md                    # Lerntagebuch (Tag 1–9)
 ├── CLAUDE.md                      # Architektur-Dokumentation
