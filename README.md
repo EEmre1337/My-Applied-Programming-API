@@ -1,5 +1,5 @@
 # Notizen REST API
-## Angewandte Programmierung · Hochschule Coburg · Emre Kartalel
+## Angewandte Programmierung · Hochschule Coburg
 
 Eine vollständige REST API für Notizen, gebaut mit **FastAPI** und **SQLite**, ergänzt durch ein **Streamlit-Frontend** und eine eigene **Pytest-Test-Suite**.
 
